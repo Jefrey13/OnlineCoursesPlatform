@@ -1,4 +1,5 @@
 ﻿using BCrypt.Net;
+using DotNetEnv;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.IdentityModel.Tokens;
 using OnlineCoursesPlatform.DTO.RequestDTO;
@@ -39,50 +40,71 @@ namespace OnlineCoursesPlatform.SERVER.Services.Impl
 
         public bool ValidateUser(LoginRequestDTO loginDto, out User user)
         {
-            user = _userRepository.GetUserByEmail(loginDto.Email);
-
-            if (user != null && VerifyPassword(loginDto.Password, user.PasswordHash))
+            try
             {
-                return true;
-            }
+                user = _userRepository.GetUserByEmail(loginDto.Email);
 
-            return false;
+                if (user != null && VerifyPassword(loginDto.Password, user.PasswordHash))
+                {
+                    return true;
+                }
+
+                return false;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("An error occurred while validating the user.", ex);
+            }
         }
 
         // Genera un token JWT con roles y permisos
         public string GenerateToken(User user)
         {
-            var roles = _roleRepository.GetRolesByUserId(user.Id).ToList();
-            var permissions = new List<Permission>();
-
-            foreach (var role in roles)
+            try
             {
-                var rolePermissions = _permissionRepository.GetPermissionsByRoleId(role.Id);
-                permissions.AddRange(rolePermissions);
+                var roles = _roleRepository.GetRolesByUserId(user.Id).ToList();
+                var permissions = new List<Permission>();
+
+                foreach (var role in roles)
+                {
+                    var rolePermissions = _permissionRepository.GetPermissionsByRoleId(role.Id);
+                    permissions.AddRange(rolePermissions);
+                }
+
+                // Claims del usuario con roles y permisos
+                var claims = new List<Claim>
+        {
+            new Claim(JwtRegisteredClaimNames.Sub, user.Email),
+            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+        };
+
+                claims.AddRange(roles.Select(role => new Claim(ClaimTypes.Role, role.Name)));
+                claims.AddRange(permissions.Select(permission => new Claim("permission", permission.Name)));
+
+                // Obtener el JWT_KEY desde el archivo .env
+                var jwtKey = Env.GetString("JWT_KEY");
+                if (string.IsNullOrEmpty(jwtKey))
+                {
+                    throw new Exception("JWT Key is missing in configuration");
+                }
+
+                var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey));
+                var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+                var token = new JwtSecurityToken(
+                    issuer: Env.GetString("JWT_ISSUER"),   // Obtener JWT_ISSUER desde el archivo .env
+                    audience: Env.GetString("JWT_AUDIENCE"), // Obtener JWT_AUDIENCE desde el archivo .env
+                    claims: claims,
+                    expires: DateTime.UtcNow.AddMinutes(30),
+                    signingCredentials: creds
+                );
+
+                return new JwtSecurityTokenHandler().WriteToken(token);
             }
-
-            // Claims del usuario con roles y permisos
-            var claims = new List<Claim>
+            catch (Exception ex)
             {
-                new Claim(JwtRegisteredClaimNames.Sub, user.Email),
-                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
-            };
-
-            claims.AddRange(roles.Select(role => new Claim(ClaimTypes.Role, role.Name)));
-            claims.AddRange(permissions.Select(permission => new Claim("permission", permission.Name)));
-
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]));
-            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-
-            var token = new JwtSecurityToken(
-                issuer: _config["Jwt:Issuer"],
-                audience: _config["Jwt:Audience"],
-                claims: claims,
-                expires: DateTime.UtcNow.AddMinutes(30),
-                signingCredentials: creds
-            );
-
-            return new JwtSecurityTokenHandler().WriteToken(token);
+                throw new Exception("An error occurred while generating the JWT token.", ex);
+            }
         }
 
         public string HashPassword(string password)
@@ -95,43 +117,66 @@ namespace OnlineCoursesPlatform.SERVER.Services.Impl
             return BCrypt.Net.BCrypt.Verify(inputPassword, storedPassword);
         }
 
-        //Refresh Token
+        // Refresh Token
         public string GenerateRefreshToken(User user)
         {
-            var refreshToken = new RefreshToken
+            try
             {
-                Token = GenerateTokenString(),
-                UserId = user.Id,
-                ExpiryTime = DateTime.UtcNow.AddDays(7)
-            };
+                var refreshToken = new RefreshToken
+                {
+                    Token = GenerateTokenString(),
+                    UserId = user.Id,
+                    ExpiryTime = DateTime.UtcNow.AddDays(7)
+                };
 
-            _refreshTokenRepository.AddRefreshToken(refreshToken);
-            _refreshTokenRepository.SaveChanges();
+                _refreshTokenRepository.AddRefreshToken(refreshToken);
+                _refreshTokenRepository.SaveChanges();
 
-            return refreshToken.Token;
+                return refreshToken.Token;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("An error occurred while generating the refresh token.", ex);
+            }
         }
+
         public bool ValidateRefreshToken(string refreshToken, out User user)
         {
-            var token = _refreshTokenRepository.GetRefreshToken(refreshToken);
-
-            if(token == null || token.ExpiryTime > DateTime.UtcNow)
+            try
             {
-                user = _userRepository.GetUserById(token.UserId);
-                return true;
+                var token = _refreshTokenRepository.GetRefreshToken(refreshToken);
+
+                if (token != null && token.ExpiryTime > DateTime.UtcNow)
+                {
+                    user = _userRepository.GetUserById(token.UserId);
+                    return true;
+                }
+                user = null;
+                return false;
             }
-            user = null;
-            return false;
+            catch (Exception ex)
+            {
+                throw new Exception("An error occurred while validating the refresh token.", ex);
+            }
         }
+
         public void RevokeRefreshToken(string refreshToken)
         {
-            _refreshTokenRepository.RevokeRefreshToken(refreshToken);
-            _refreshTokenRepository.SaveChanges();
+            try
+            {
+                _refreshTokenRepository.RevokeRefreshToken(refreshToken);
+                _refreshTokenRepository.SaveChanges();
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("An error occurred while revoking the refresh token.", ex);
+            }
         }
+
         public string GenerateTokenString()
         {
             var randomNumber = new byte[32];
-
-            using(var rng = RandomNumberGenerator.Create())
+            using (var rng = RandomNumberGenerator.Create())
             {
                 rng.GetBytes(randomNumber);
                 return Convert.ToBase64String(randomNumber);
@@ -141,26 +186,32 @@ namespace OnlineCoursesPlatform.SERVER.Services.Impl
         // Registro de un nuevo usuario
         public bool Register(RegisterRequestDTO registerDto, out User user)
         {
-            user = null;
-
-            if (_userRepository.GetUserByEmail(registerDto.Email) != null)
+            try
             {
-                return false; // Email ya en uso
+                user = null;
+
+                if (_userRepository.GetUserByEmail(registerDto.Email) != null)
+                {
+                    return false; // Email ya en uso
+                }
+
+                // Crear un nuevo usuario
+                user = new User
+                {
+                    FirstName = registerDto.FirstName,
+                    LastName = registerDto.LastName,
+                    Email = registerDto.Email,
+                    PasswordHash = HashPassword(registerDto.Password)
+                };
+
+                // Guardar el nuevo usuario en la base de datos
+                _userRepository.AddUser(user);
+                return _userRepository.SaveChanges();
             }
-
-            // Crear un nuevo usuario
-            user = new User
+            catch (Exception ex)
             {
-                FirstName = registerDto.FirstName,
-                LastName = registerDto.LastName,
-                Email = registerDto.Email,
-                PasswordHash = HashPassword(registerDto.Password)
-            };
-
-            // Guardar el nuevo usuario en la base de datos
-            _userRepository.AddUser(user);
-            return _userRepository.SaveChanges();
+                throw new Exception("An error occurred during the user registration process.", ex);
+            }
         }
-
     }
 }

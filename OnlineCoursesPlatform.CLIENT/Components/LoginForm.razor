@@ -1,10 +1,8 @@
 ﻿@code {
     [Parameter] public EventCallback OnSubmit { get; set; }
+    [Parameter] public LoginRequestDTO LoginRequest { get; set; }
     [Parameter] public bool RememberMe { get; set; }
     [Parameter] public EventCallback OnToggleRememberMe { get; set; }
-
-    private string email = string.Empty;
-    private string password = string.Empty;
 
     private async Task SubmitForm()
     {
@@ -31,11 +29,11 @@
 
     <form class="login-form" @onsubmit="SubmitForm">
         <div class="login-form-group">
-            <input type="email" id="email" @bind="email" class="login-form-input" placeholder="Email" />
+            <input type="email" @bind="LoginRequest.Email" class="login-form-input" placeholder="Email" />
         </div>
 
         <div class="login-form-group">
-            <input type="password" id="password" @bind="password" class="login-form-input" placeholder="Password" />
+            <input type="password" @bind="LoginRequest.Password" class="login-form-input" placeholder="Password" />
         </div>
 
         <div class="login-form-options">

@@ -22,11 +22,22 @@ namespace OnlineCoursesPlatform.CLIENT.Services.Impl
         {
             try
             {
-                var response = await _httpClient.PostAsJsonAsync("/api/v1/Auth/login", loginRequest);
+                // Crear la solicitud HTTP manualmente
+                var request = new HttpRequestMessage(HttpMethod.Post, "/api/v1/Auth/login")
+                {
+                    Content = JsonContent.Create(loginRequest)
+                };
+
+                // Verificar los encabezados y agregar si es necesario
+                request.Headers.Add("Accept", "application/json"); // Aceptar respuesta JSON
+                request.Headers.Add("User-Agent", "BlazorClient");
+
+                // Enviar la solicitud
+                var response = await _httpClient.SendAsync(request);
 
                 if (response.IsSuccessStatusCode)
                 {
-                    // Usar UserResponseDTO en lugar de TokenResponseDTO
+                    // Leer el cuerpo de la respuesta como JSON
                     var userResponse = await response.Content.ReadFromJsonAsync<UserResponseDTO>();
 
                     if (userResponse != null)

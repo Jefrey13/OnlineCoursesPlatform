@@ -1,49 +1,59 @@
-﻿@using Blazored.LocalStorage
-@using OnlineCoursesPlatform.CLIENT.Pages
-@inject Blazored.LocalStorage.ILocalStorageService LocalStorageService
+﻿@using OnlineCoursesPlatform.CLIENT.Pages
+@using OnlineCoursesPlatform.CLIENT.Services
+@inject ILocalStorageService LocalStorageService
 @inject NavigationManager Navigation
 
 <Router AppAssembly="@typeof(App).Assembly">
     <Found Context="routeData">
-        @if (IsProtectedRoute(routeData.PageType))
+        @if (IsCheckingAuthentication)
         {
-            @if (IsAuthenticated)
-            {
-                <AuthorizeRouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)" />
-            }
-            else
-            {
-                @* Redirigir al login si no está autenticado *@
-                Navigation.NavigateTo("/login", true);
-            }
+            <!-- Pantalla de carga mientras se verifica la autenticación -->
+            <p>Verificando autenticación...</p>
         }
         else
         {
-            <RouteView RouteData="@routeData" DefaultLayout="@typeof(SimpleLayout)" />
+            @if (IsAuthenticated || IsPublicRoute(routeData.PageType))
+            {
+                <RouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)" />
+            }
+            else
+            {
+                // Redirigir al login si no está autenticado y no es una ruta pública
+                Navigation.NavigateTo("/login", true);
+            }
         }
     </Found>
     <NotFound>
-        <PageTitle>Not found</PageTitle>
+        <PageTitle>Página no encontrada</PageTitle>
         <LayoutView Layout="@typeof(SimpleLayout)">
-            <p role="alert">Sorry, there's nothing at this address.</p>
+            <p role="alert">Lo siento, no hay nada en esta dirección.</p>
         </LayoutView>
     </NotFound>
 </Router>
 
 @code {
-    private bool IsAuthenticated;
+    private bool IsAuthenticated = false;
+    private bool IsCheckingAuthentication = true;
 
     protected override async Task OnInitializedAsync()
     {
-        // Intenta obtener el token de autenticación del almacenamiento local
-        var token = await LocalStorageService.GetItemAsync<string>("authToken");
-        IsAuthenticated = !string.IsNullOrEmpty(token);
+        await CheckAuthenticationAsync();
     }
 
-    // Verificar si la ruta está protegida
-    private bool IsProtectedRoute(Type pageType)
+    private async Task CheckAuthenticationAsync()
     {
-        var protectedRoutes = new[] { typeof(Home) }; // Páginas que requieren autenticación
-        return protectedRoutes.Contains(pageType);
+        var token = await LocalStorageService.GetTokenAsync("authToken");
+
+        IsAuthenticated = !string.IsNullOrEmpty(token);
+        IsCheckingAuthentication = false;
+
+        // Depuración para verificar el estado de la autenticación
+        Console.WriteLine($"Autenticado: {IsAuthenticated}, Token: {token}");
+    }
+
+    private bool IsPublicRoute(Type pageType)
+    {
+        var publicRoutes = new[] { typeof(LoginPage), typeof(RegisterPage), typeof(ForgotPasswordPage) };
+        return publicRoutes.Contains(pageType);
     }
 }

@@ -11,14 +11,26 @@
 
     private async Task HandleLogin()
     {
-        var response = await AuthService.Login(loginRequest);
-        if (response.IsSuccessStatusCode)
+        try
         {
-            NavigationManager.NavigateTo("/");
+            // Verificar los datos antes de enviarlos
+            Console.WriteLine($"Email: {loginRequest.Email}, Password: {loginRequest.Password}");
+
+            var response = await AuthService.Login(loginRequest);
+            if (response.IsSuccessStatusCode)
+            {
+                // Redirigir al home después del login
+                NavigationManager.NavigateTo("/", true);
+            }
+            else
+            {
+                var errorContent = await response.Content.ReadAsStringAsync();
+                errorMessage = $"Login failed: {errorContent}";
+            }
         }
-        else
+        catch (Exception ex)
         {
-            errorMessage = "Invalid credentials. Please try again.";
+            errorMessage = $"An error occurred: {ex.Message}";
         }
     }
 
@@ -32,6 +44,7 @@
     <div class="login-page-form">
         <OnlineCoursesPlatform.CLIENT.Components.LoginForm 
             OnSubmit="HandleLogin" 
+            LoginRequest="loginRequest" 
             RememberMe="rememberMe" 
             OnToggleRememberMe="ToggleRememberMe" 
         />

@@ -1,40 +1,53 @@
 ﻿@inherits LayoutComponentBase
-@inject Blazored.LocalStorage.ILocalStorageService LocalStorageService
+@using OnlineCoursesPlatform.CLIENT.Services
+@inject ILocalStorageService LocalStorageService
 @inject NavigationManager Navigation
 
 <div class="page">
-    @if (IsAuthenticated && !IsLoginOrRegisterOrForgotPassword())
+    @if (IsCheckingAuthentication)
     {
-        <div class="sidebar">
-            <NavMenu />
-        </div>
+        <p>Verificando autenticación...</p>
     }
+    else
+    {
+        @if (IsAuthenticated && !IsPublicRoute())
+        {
+            <!-- Mostramos el NavMenu si el usuario está autenticado y no está en rutas públicas -->
+            <div class="sidebar">
+                <NavMenu />
+            </div>
+        }
 
-    <main>
-        <article class="content px-4">
-            @Body
-        </article>
-    </main>
+        <main>
+            <article class="content px-4">
+                @Body
+            </article>
+        </main>
+    }
 </div>
 
 @code {
-    private bool IsAuthenticated;
+    private bool IsAuthenticated = false;
+    private bool IsCheckingAuthentication = true;
 
     protected override async Task OnInitializedAsync()
     {
-        var token = await LocalStorageService.GetItemAsync<string>("authToken");
-
-        IsAuthenticated = !string.IsNullOrEmpty(token);
-
-        if (!IsAuthenticated && !IsLoginOrRegisterOrForgotPassword())
-        {
-            Navigation.NavigateTo("/login", true); // Redirigir a login si no está autenticado
-        }
+        await CheckAuthenticationAsync();
     }
 
-    private bool IsLoginOrRegisterOrForgotPassword()
+    private async Task CheckAuthenticationAsync()
     {
-        var uri = Navigation.Uri.ToLower();
-        return uri.Contains("/login") || uri.Contains("/register") || uri.Contains("/forgot-password");
+        var token = await LocalStorageService.GetTokenAsync("authToken");
+
+        IsAuthenticated = !string.IsNullOrEmpty(token);
+        IsCheckingAuthentication = false;
+
+        Console.WriteLine($"Estado de autenticación: {IsAuthenticated}");
+    }
+
+    private bool IsPublicRoute()
+    {
+        var currentUri = Navigation.Uri.ToLower();
+        return currentUri.Contains("/login") || currentUri.Contains("/register") || currentUri.Contains("/forgot-password");
     }
 }

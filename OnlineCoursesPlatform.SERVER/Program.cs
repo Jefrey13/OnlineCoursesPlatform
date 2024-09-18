@@ -68,8 +68,30 @@ builder.Services.AddAuthentication(options =>
         ValidateIssuerSigningKey = true,
         ValidIssuer = Env.GetString("JWT_ISSUER"),
         ValidAudience = Env.GetString("JWT_AUDIENCE"),
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("YourSecretKey"))
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("JWT_KEY"))
     };
+});
+
+//builder.Services.AddCors(options =>
+//{
+//    options.AddPolicy("CorsPolicy", builder =>
+//    {
+//        builder
+//            .AllowAnyOrigin() // Permitir cualquier origen (puedes restringirlo a localhost:5176 si lo prefieres)
+//            .AllowAnyMethod() // Permitir cualquier método HTTP (GET, POST, PUT, etc.)
+//            .AllowAnyHeader(); // Permitir cualquier encabezado
+//    });
+//});
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("CorsPolicy", builder =>
+    {
+        builder
+            .WithOrigins("http://localhost:5176") // Permitir solo el frontend Blazor
+            .AllowAnyMethod()
+            .AllowAnyHeader();
+    });
 });
 
 var app = builder.Build();
@@ -99,6 +121,7 @@ app.Use(async (context, next) =>
 });
 
 app.UseResponseCompression(); // Compresión de respuestas
+app.UseCors("CorsPolicy");
 app.UseHttpsRedirection();
 app.UseAuthorization();
 app.MapControllers();
