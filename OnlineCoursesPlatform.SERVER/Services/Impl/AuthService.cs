@@ -1,4 +1,5 @@
 ﻿using BCrypt.Net;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.IdentityModel.Tokens;
 using OnlineCoursesPlatform.DTO.RequestDTO;
 using OnlineCoursesPlatform.SERVER.Models;
@@ -136,5 +137,6 @@ namespace OnlineCoursesPlatform.SERVER.Services.Impl
                 return Convert.ToBase64String(randomNumber);
             }
         }
+
     }
 }

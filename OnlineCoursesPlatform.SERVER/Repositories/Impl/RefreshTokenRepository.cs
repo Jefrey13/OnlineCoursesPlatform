@@ -3,7 +3,7 @@ using OnlineCoursesPlatform.SERVER.Models;
 
 namespace OnlineCoursesPlatform.SERVER.Repositories.Impl
 {
-    public class RefreshTokenRepository
+    public class RefreshTokenRepository: IRefreshTokenRepository
     {
         private readonly ApplicationDbContext _context;
 

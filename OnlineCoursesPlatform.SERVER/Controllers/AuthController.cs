@@ -13,10 +13,12 @@ namespace OnlineCoursesPlatform.SERVER.Controllers
     public class AuthController : ControllerBase
     {
         private readonly IAuthService _authService;
+        private readonly IPasswordResetService _passwordResetService;
 
-        public AuthController(IAuthService authService)
+        public AuthController(IAuthService authService, IPasswordResetService passwordResetService)
         {
             _authService = authService;
+            _passwordResetService = passwordResetService;
         }
 
         // POST: api/v1/auth/login
@@ -67,6 +69,36 @@ namespace OnlineCoursesPlatform.SERVER.Controllers
             }
 
             return Unauthorized(new { message = "Invalid or expired refresh token." });
+        }
+
+        [HttpPost("request-otp")]
+        public IActionResult RequestOtp([FromBody] RequestOtpDTO request)
+        {
+            if (string.IsNullOrEmpty(request.Email))
+            {
+                return BadRequest(new { message = "Email is required" });
+            }
+
+            try
+            {
+                _passwordResetService.GenerateAndSendOtp(request.Email);
+                return Ok(new { message = "OTP sent to email" });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        [HttpPost("verify-otp")]
+        public IActionResult VerifyOtp([FromBody] VerifyOtpRequestDTO request)
+        {
+            if (_passwordResetService.VerifyOtp(request.Email, request.OtpCode))
+            {
+                return Ok(new { message = "OTP verified" });
+            }
+
+            return BadRequest(new { message = "Invalid OTP" });
         }
     }
 }
