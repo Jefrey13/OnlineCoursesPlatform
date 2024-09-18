@@ -1,0 +1,35 @@
+﻿@page "/login"
+@using OnlineCoursesPlatform.CLIENT.Services
+@using OnlineCoursesPlatform.DTO.RequestDTO
+@inject IAuthService AuthService
+@inject NavigationManager NavigationManager
+
+@code {
+    private LoginRequestDTO loginRequest = new LoginRequestDTO();
+    private bool rememberMe = false;
+    private string errorMessage = string.Empty;
+
+    private async Task HandleLogin()
+    {
+        var response = await AuthService.Login(loginRequest);
+        if (response.IsSuccessStatusCode)
+        {
+            // Manejar el inicio de sesión exitoso
+            NavigationManager.NavigateTo("/");
+        }
+        else
+        {
+            // Manejar errores
+            errorMessage = "Invalid credentials. Please try again.";
+        }
+    }
+
+    private void ToggleRememberMe()
+    {
+        rememberMe = !rememberMe;
+    }
+}
+
+<div class="login-page">
+    <OnlineCoursesPlatform.CLIENT.Components.LoginForm OnSubmit="HandleLogin" RememberMe="rememberMe" OnToggleRememberMe="ToggleRememberMe" />
+</div>

@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json.Linq;
 using OnlineCoursesPlatform.DTO.RequestDTO;
 using OnlineCoursesPlatform.DTO.ResponseDTO;
 using OnlineCoursesPlatform.SERVER.Models;
@@ -31,14 +32,19 @@ namespace OnlineCoursesPlatform.SERVER.Controllers
             }
 
             // Validar las credenciales del usuario
-            if(_authService.ValidateUser(loginRequest, out User user))
+            if (_authService.ValidateUser(loginRequest, out User user))
             {
                 // Generar el token JWT con roles y permisos dinámicos
                 var token = _authService.GenerateToken(user);
 
+                // Generar el refresh token
+                var refreshToken = _authService.GenerateRefreshToken(user);
+
                 var response = new UserResponseDTO
                 {
                     Token = token,
+                    RefreshToken = refreshToken,
+                    Expiration = DateTime.UtcNow.AddMinutes(30)
                 };
 
                 return Ok(response);
@@ -77,12 +83,12 @@ namespace OnlineCoursesPlatform.SERVER.Controllers
                 var newToken = _authService.GenerateToken(user);
                 var newRefreshToken = _authService.GenerateRefreshToken(user);
 
-                return Ok(new
+                var response = new UserResponseDTO
                 {
                     Token = newToken,
                     RefreshToken = newRefreshToken,
                     Expiration = DateTime.UtcNow.AddMinutes(30)
-                });
+                };
             }
 
             return Unauthorized(new { message = "Invalid or expired refresh token." });

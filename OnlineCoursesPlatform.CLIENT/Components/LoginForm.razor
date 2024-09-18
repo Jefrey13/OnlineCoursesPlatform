@@ -1,0 +1,46 @@
+﻿@code {
+    [Parameter] public EventCallback OnSubmit { get; set; }
+    [Parameter] public bool RememberMe { get; set; }
+    [Parameter] public EventCallback OnToggleRememberMe { get; set; }
+
+    private string email = string.Empty;
+    private string password = string.Empty;
+
+    private async Task SubmitForm()
+    {
+        if (OnSubmit.HasDelegate)
+        {
+            await OnSubmit.InvokeAsync();
+        }
+    }
+
+    private async Task ToggleRememberMe()
+    {
+        if (OnToggleRememberMe.HasDelegate)
+        {
+            await OnToggleRememberMe.InvokeAsync();
+        }
+    }
+}
+
+<form class="login-form" @onsubmit="SubmitForm">
+    <div class="login-form__group">
+        <label for="email" class="login-form__label">Email</label>
+        <input type="email" id="email" @bind="email" class="login-form__input" placeholder="Email" />
+    </div>
+
+    <div class="login-form__group">
+        <label for="password" class="login-form__label">Password</label>
+        <input type="password" id="password" @bind="password" class="login-form__input" placeholder="Password" />
+    </div>
+
+    <div class="login-form__options">
+        <label class="login-form__checkbox">
+            <input type="checkbox" checked="@RememberMe" @onchange="ToggleRememberMe" class="login-form__checkbox-input" />
+            Remember me
+        </label>
+        <a href="#" class="login-form__forgot-password">Forgot Password?</a>
+    </div>
+
+    <button type="submit" class="login-form__submit-button">Log in</button>
+</form>
