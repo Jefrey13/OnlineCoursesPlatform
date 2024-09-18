@@ -1,0 +1,32 @@
+﻿@page "/register"
+@using OnlineCoursesPlatform.CLIENT.Services
+@using OnlineCoursesPlatform.DTO.RequestDTO
+@inject IAuthService AuthService
+@inject NavigationManager NavigationManager
+
+@code {
+    private RegisterRequestDTO registerRequest = new RegisterRequestDTO();
+    private string errorMessage = string.Empty;
+    private string successMessage = string.Empty;
+
+    private async Task HandleRegister()
+    {
+        var response = await AuthService.Register(registerRequest);
+        if (response.IsSuccessStatusCode)
+        {
+            successMessage = "Account created successfully. You can now log in.";
+            NavigationManager.NavigateTo("/login");
+        }
+        else
+        {
+            errorMessage = "Failed to create account. Please try again.";
+        }
+    }
+}
+
+<div class="register-page-container">
+    <OnlineCoursesPlatform.CLIENT.Components.RegisterForm 
+        OnSubmit="HandleRegister" 
+        RegisterRequest="registerRequest" 
+    />
+</div>

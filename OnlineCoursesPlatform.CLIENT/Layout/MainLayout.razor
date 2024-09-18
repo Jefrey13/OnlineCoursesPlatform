@@ -1,16 +1,40 @@
 ﻿@inherits LayoutComponentBase
+@inject Blazored.LocalStorage.ILocalStorageService LocalStorageService
+@inject NavigationManager Navigation
+
 <div class="page">
-    <div class="sidebar">
-        <NavMenu />
-    </div>
+    @if (IsAuthenticated && !IsLoginOrRegisterOrForgotPassword())
+    {
+        <div class="sidebar">
+            <NavMenu />
+        </div>
+    }
 
     <main>
-        <div class="top-row px-4">
-            <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
-        </div>
-
         <article class="content px-4">
             @Body
         </article>
     </main>
 </div>
+
+@code {
+    private bool IsAuthenticated;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var token = await LocalStorageService.GetItemAsync<string>("authToken");
+
+        IsAuthenticated = !string.IsNullOrEmpty(token);
+
+        if (!IsAuthenticated && !IsLoginOrRegisterOrForgotPassword())
+        {
+            Navigation.NavigateTo("/login", true); // Redirigir a login si no está autenticado
+        }
+    }
+
+    private bool IsLoginOrRegisterOrForgotPassword()
+    {
+        var uri = Navigation.Uri.ToLower();
+        return uri.Contains("/login") || uri.Contains("/register") || uri.Contains("/forgot-password");
+    }
+}

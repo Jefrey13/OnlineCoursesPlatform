@@ -23,24 +23,34 @@
     }
 }
 
-<form class="login-form" @onsubmit="SubmitForm">
-    <div class="login-form__group">
-        <label for="email" class="login-form__label">Email</label>
-        <input type="email" id="email" @bind="email" class="login-form__input" placeholder="Email" />
+<div class="login-form-container">
+    <div class="login-form-header">
+        <h2 class="login-form-title">Log in to your Account</h2>
+        <p class="login-form-subtitle">Welcome back! Please enter your details.</p>
     </div>
 
-    <div class="login-form__group">
-        <label for="password" class="login-form__label">Password</label>
-        <input type="password" id="password" @bind="password" class="login-form__input" placeholder="Password" />
-    </div>
+    <form class="login-form" @onsubmit="SubmitForm">
+        <div class="login-form-group">
+            <input type="email" id="email" @bind="email" class="login-form-input" placeholder="Email" />
+        </div>
 
-    <div class="login-form__options">
-        <label class="login-form__checkbox">
-            <input type="checkbox" checked="@RememberMe" @onchange="ToggleRememberMe" class="login-form__checkbox-input" />
-            Remember me
-        </label>
-        <a href="#" class="login-form__forgot-password">Forgot Password?</a>
-    </div>
+        <div class="login-form-group">
+            <input type="password" id="password" @bind="password" class="login-form-input" placeholder="Password" />
+        </div>
 
-    <button type="submit" class="login-form__submit-button">Log in</button>
-</form>
+        <div class="login-form-options">
+            <label class="login-form-checkbox">
+                <input type="checkbox" checked="@RememberMe" @onchange="ToggleRememberMe" class="login-form-checkbox-input" />
+                Remember me
+            </label>
+            <a href="/forgot-password" class="login-form-forgot-password">Forgot Password?</a>
+        </div>
+
+        <button type="submit" class="login-form-submit-button">Log in</button>
+
+        <div class="login-form-footer">
+            <span>Don't have an account?</span>
+            <a href="/register" class="login-form-link">Create an account</a>
+        </div>
+    </form>
+</div>

@@ -1,13 +1,13 @@
-﻿.login-page-container {
+﻿.register-page-container {
     display: flex;
-    width: 100vw;
-    height: 100vh;
     justify-content: center;
     align-items: center;
+    width: 100vw;
+    height: 100vh;
     background-color: #fbfcf8;
 }
 
-.login-page-form {
+.register-page-form {
     flex: 1;
     display: flex;
     justify-content: center;

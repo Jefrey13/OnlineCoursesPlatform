@@ -14,12 +14,10 @@
         var response = await AuthService.Login(loginRequest);
         if (response.IsSuccessStatusCode)
         {
-            // Manejar el inicio de sesión exitoso
             NavigationManager.NavigateTo("/");
         }
         else
         {
-            // Manejar errores
             errorMessage = "Invalid credentials. Please try again.";
         }
     }
@@ -30,6 +28,12 @@
     }
 }
 
-<div class="login-page">
-    <OnlineCoursesPlatform.CLIENT.Components.LoginForm OnSubmit="HandleLogin" RememberMe="rememberMe" OnToggleRememberMe="ToggleRememberMe" />
+<div class="login-page-container">
+    <div class="login-page-form">
+        <OnlineCoursesPlatform.CLIENT.Components.LoginForm 
+            OnSubmit="HandleLogin" 
+            RememberMe="rememberMe" 
+            OnToggleRememberMe="ToggleRememberMe" 
+        />
+    </div>
 </div>

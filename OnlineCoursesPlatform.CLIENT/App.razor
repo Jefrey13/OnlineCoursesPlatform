@@ -1,12 +1,49 @@
-﻿<Router AppAssembly="@typeof(App).Assembly">
+﻿@using Blazored.LocalStorage
+@using OnlineCoursesPlatform.CLIENT.Pages
+@inject Blazored.LocalStorage.ILocalStorageService LocalStorageService
+@inject NavigationManager Navigation
+
+<Router AppAssembly="@typeof(App).Assembly">
     <Found Context="routeData">
-        <RouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)" />
-        <FocusOnNavigate RouteData="@routeData" Selector="h1" />
+        @if (IsProtectedRoute(routeData.PageType))
+        {
+            @if (IsAuthenticated)
+            {
+                <AuthorizeRouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)" />
+            }
+            else
+            {
+                @* Redirigir al login si no está autenticado *@
+                Navigation.NavigateTo("/login", true);
+            }
+        }
+        else
+        {
+            <RouteView RouteData="@routeData" DefaultLayout="@typeof(SimpleLayout)" />
+        }
     </Found>
     <NotFound>
         <PageTitle>Not found</PageTitle>
-        <LayoutView Layout="@typeof(MainLayout)">
+        <LayoutView Layout="@typeof(SimpleLayout)">
             <p role="alert">Sorry, there's nothing at this address.</p>
         </LayoutView>
     </NotFound>
 </Router>
+
+@code {
+    private bool IsAuthenticated;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Intenta obtener el token de autenticación del almacenamiento local
+        var token = await LocalStorageService.GetItemAsync<string>("authToken");
+        IsAuthenticated = !string.IsNullOrEmpty(token);
+    }
+
+    // Verificar si la ruta está protegida
+    private bool IsProtectedRoute(Type pageType)
+    {
+        var protectedRoutes = new[] { typeof(Home) }; // Páginas que requieren autenticación
+        return protectedRoutes.Contains(pageType);
+    }
+}
