@@ -12,5 +12,7 @@ namespace OnlineCoursesPlatform.SERVER.Services
 
         string GenerateRefreshToken(User user);
         bool ValidateRefreshToken(string refreshToken, out User user);
+
+        bool Register(RegisterRequestDTO registerDto, out User user);
     }
 }

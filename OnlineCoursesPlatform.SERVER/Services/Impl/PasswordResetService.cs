@@ -6,10 +6,10 @@ namespace OnlineCoursesPlatform.SERVER.Services.Impl
     public class PasswordResetService: IPasswordResetService
     {
         private readonly IUserRepository _userRepository;
-        private readonly EmailService _emailService;
+        private readonly IEmailService _emailService;
         private readonly IMemoryCache _cache;
 
-        public PasswordResetService(IUserRepository userRepository, EmailService emailService, IMemoryCache cache)
+        public PasswordResetService(IUserRepository userRepository, IEmailService emailService, IMemoryCache cache)
         {
             _userRepository = userRepository;
             _emailService = emailService;

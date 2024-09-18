@@ -46,6 +46,23 @@ namespace OnlineCoursesPlatform.SERVER.Controllers
             return Unauthorized(new { message = "Invalid credentials." });
         }
 
+        // POST: api/v1/auth/register
+        [HttpPost("register")]
+        public IActionResult Register([FromBody] RegisterRequestDTO registerRequest)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            if (_authService.Register(registerRequest, out User user))
+            {
+                return Ok(new { message = "User registered successfully" });
+            }
+
+            return BadRequest(new { message = "Email already in use" });
+        }
+
         [HttpPost("refresh-token")]
         public IActionResult RefreshToken([FromBody] RefreshTokenRequestDTO refreshTokenRequest)
         {

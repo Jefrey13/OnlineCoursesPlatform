@@ -138,5 +138,29 @@ namespace OnlineCoursesPlatform.SERVER.Services.Impl
             }
         }
 
+        // Registro de un nuevo usuario
+        public bool Register(RegisterRequestDTO registerDto, out User user)
+        {
+            user = null;
+
+            if (_userRepository.GetUserByEmail(registerDto.Email) != null)
+            {
+                return false; // Email ya en uso
+            }
+
+            // Crear un nuevo usuario
+            user = new User
+            {
+                FirstName = registerDto.FirstName,
+                LastName = registerDto.LastName,
+                Email = registerDto.Email,
+                PasswordHash = HashPassword(registerDto.Password)
+            };
+
+            // Guardar el nuevo usuario en la base de datos
+            _userRepository.AddUser(user);
+            return _userRepository.SaveChanges();
+        }
+
     }
 }
